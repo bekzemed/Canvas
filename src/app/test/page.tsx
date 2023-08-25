@@ -1,15 +1,13 @@
 "use client";
 
-import { AddOutlined } from "@mui/icons-material";
 import { TextField } from "@mui/material";
-import axios from "axios";
+import "@uploadthing/react/styles.css";
 import { useEffect, useRef, useState } from "react";
 
+import { UploadButton } from "@/utils/uploadthing";
+
 const Picture = () => {
-  const [uplaoding, setUploading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState("");
   const [uploadedImage, setUploadedImage] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File>();
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [title, setTitle] = useState("");
   const [director, setDirector] = useState("");
@@ -18,28 +16,15 @@ const Picture = () => {
   const [starring, setStarring] = useState("");
   const [music, setMusic] = useState("");
   const [colorPicker, setColorPicker] = useState("#faf4e6");
+  const [textColor, setTextColor] = useState("black");
   const canvas = useRef<HTMLCanvasElement>(null);
   const secondCanvas = useRef<HTMLCanvasElement>(null);
 
-  const handleUpload = async () => {
-    setUploading(true);
-    try {
-      if (!selectedFile) return;
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      const { data } = await axios.post("/api", formData);
-      setUploadedImage(data.filename);
-    } catch (error: any) {
-      console.log(error.response?.data);
-    }
-    setUploading(false);
-  };
-
   useEffect(() => {
     const posterImage = new Image();
-    posterImage.src = uploadedImage ? uploadedImage : "/batman.jpeg";
+    posterImage.src = uploadedImage ? uploadedImage : "/black.jpeg";
     posterImage.onload = () => setImage(posterImage);
-  }, [uploadedImage, uplaoding]);
+  }, [uploadedImage]);
 
   useEffect(() => {
     if (canvas && image && secondCanvas) {
@@ -77,7 +62,7 @@ const Picture = () => {
       ctx.drawImage(image, 100, 150, 500, 600);
 
       ctx.font = "60px Roboto";
-      ctx.fillStyle = "black";
+      ctx.fillStyle = textColor;
       ctx.direction = "ltr";
 
       ctx.fillText(title, 100, 130);
@@ -97,6 +82,7 @@ const Picture = () => {
     }
   }, [
     image,
+    uploadedImage,
     canvas,
     title,
     director,
@@ -106,6 +92,7 @@ const Picture = () => {
     synopsis,
     starring,
     music,
+    textColor,
   ]);
 
   return (
@@ -117,38 +104,16 @@ const Picture = () => {
         <div className="mb-8">
           <p className="text-xl mb-3 font-extrabold">Upload Artwork:</p>
 
-          <div className="flex justify-around items-end">
-            <label>
-              <input
-                type="file"
-                hidden
-                onChange={({ target }) => {
-                  if (target.files) {
-                    const file = target.files[0];
-                    setSelectedImage(URL.createObjectURL(file));
-                    setSelectedFile(file);
-                  }
-                }}
-              />
-              <div className="w-40 aspect-video rounded flex items-center justify-center border-2 border-dashed border-blue-600 cursor-pointer">
-                {selectedImage ? (
-                  <img src={selectedImage} alt="Poster" />
-                ) : (
-                  <AddOutlined fontSize="large" color="primary" />
-                )}
-              </div>
-            </label>
-
-            <button
-              type="button"
-              disabled={uplaoding}
-              onClick={handleUpload}
-              className={`bg-blue-600 p-3 w-32 text-center h-min rounded-lg text-white ${
-                uplaoding ? "opacity-50" : "opacity-100"
-              }`}
-            >
-              {uplaoding ? "Uploading..." : "Upload"}
-            </button>
+          <div className="flex">
+            <UploadButton
+              endpoint="imageUploader"
+              onClientUploadComplete={(res) => {
+                if (res) setUploadedImage(res[0]?.url);
+              }}
+              onUploadError={(error: Error) => {
+                console.log(error.message);
+              }}
+            />
           </div>
         </div>
         <div className="w-[400px]">
@@ -229,17 +194,32 @@ const Picture = () => {
 
         <div>
           <p className="text-xl mb-3 font-extrabold">Select Colors:</p>
-          <div className="flex items-center gap-4">
-            <label htmlFor="colorPicker" className="text-xl">
-              Background
-            </label>
-            <input
-              id="colorPicker"
-              type="color"
-              name="colorPicker"
-              value={colorPicker}
-              onChange={(e) => setColorPicker(e.target.value)}
-            />
+          <div className="flex flex-col">
+            <div className="mb-4 flex items-center space-x-5">
+              <label htmlFor="colorPicker" className="text-xl">
+                Background
+              </label>
+              <input
+                id="colorPicker"
+                type="color"
+                name="colorPicker"
+                value={colorPicker}
+                onChange={(e) => setColorPicker(e.target.value)}
+              />
+            </div>
+
+            <div className="mb-4 flex items-center space-x-5">
+              <label htmlFor="textColor" className="text-xl">
+                Text Color
+              </label>
+              <input
+                id="textColor"
+                type="color"
+                name="textColor"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
